@@ -28,5 +28,6 @@ class SeleniumRequest(Request):
         self.wait_until = wait_until
         self.screenshot = screenshot
         self.script = script
+        self.proxy=proxy
 
         super().__init__(*args, **kwargs)

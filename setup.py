@@ -30,7 +30,7 @@ from pip._internal.req import parse_requirements
 
 setup(
     # packages=find_packages(),
-    install_requires=['scrapy>=1.0.0','selenium>=3.9.0'],
+    install_requires=['scrapy>=1.0.0','selenium>=3.9.0', 'wheel>=0.36.2'],
     name='scrapy-selenium',
     version='0.0.8',
     description='Scrapy with selenium',

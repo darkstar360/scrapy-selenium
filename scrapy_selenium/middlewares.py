@@ -6,7 +6,8 @@ from scrapy import signals
 from scrapy.exceptions import NotConfigured
 from scrapy.http import HtmlResponse
 from selenium.webdriver.support.ui import WebDriverWait
-
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+import random
 from .http import SeleniumRequest
 
 
@@ -14,7 +15,7 @@ class SeleniumMiddleware:
     """Scrapy middleware handling the requests using selenium"""
 
     def __init__(self, driver_name, driver_executable_path,
-        browser_executable_path, command_executor, driver_arguments):
+                 browser_executable_path, command_executor, driver_arguments, proxies_capabilities):
         """Initialize the selenium webdriver
 
         Parameters
@@ -45,17 +46,30 @@ class SeleniumMiddleware:
             driver_options.binary_location = browser_executable_path
         for argument in driver_arguments:
             driver_options.add_argument(argument)
-
+        if driver_name == 'chrome' and proxies_capabilities is not None and len(proxies_capabilities) >= 1:
+            capabilities = dict(DesiredCapabilities.CHROME)
+            proxy = {'address': f'{random.choice(proxies_capabilities)}', }
+            print(f'using proxy # {proxy["address"]}')
+            capabilities['proxy'] = {'proxyType': 'MANUAL',
+                                     # 'default': proxy['address'],
+                                     'httpProxy': proxy['address'],
+                                     'ftpProxy': proxy['address'],
+                                     'sslProxy': proxy['address'],
+                                     'noProxy': '',
+                                     'class': "org.openqa.selenium.Proxy",
+                                     'autodetect': False}
         driver_kwargs = {
             'executable_path': driver_executable_path,
-            f'{driver_name}_options': driver_options
+            f'{driver_name}_options': driver_options,
+            'desired_capabilities': capabilities
         }
 
         # locally installed driver
         if driver_executable_path is not None:
             driver_kwargs = {
                 'executable_path': driver_executable_path,
-                f'{driver_name}_options': driver_options
+                f'{driver_name}_options': driver_options,
+                'desired_capabilities': capabilities
             }
             self.driver = driver_klass(**driver_kwargs)
         # remote driver
@@ -74,6 +88,7 @@ class SeleniumMiddleware:
         browser_executable_path = crawler.settings.get('SELENIUM_BROWSER_EXECUTABLE_PATH')
         command_executor = crawler.settings.get('SELENIUM_COMMAND_EXECUTOR')
         driver_arguments = crawler.settings.get('SELENIUM_DRIVER_ARGUMENTS')
+        proxies_capabilities = crawler.settings.get('PROXIES')
 
         if driver_name is None:
             raise NotConfigured('SELENIUM_DRIVER_NAME must be set')
@@ -87,7 +102,8 @@ class SeleniumMiddleware:
             driver_executable_path=driver_executable_path,
             browser_executable_path=browser_executable_path,
             command_executor=command_executor,
-            driver_arguments=driver_arguments
+            driver_arguments=driver_arguments,
+            proxies_capabilities=proxies_capabilities
         )
 
         crawler.signals.connect(middleware.spider_closed, signals.spider_closed)
@@ -137,4 +153,3 @@ class SeleniumMiddleware:
         """Shutdown the driver when spider is closed"""
 
         self.driver.quit()
-

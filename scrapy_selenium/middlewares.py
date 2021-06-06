@@ -58,6 +58,8 @@ class SeleniumMiddleware:
                                      'noProxy': '',
                                      'class': "org.openqa.selenium.Proxy",
                                      'autodetect': False}
+        else:
+            capabilities = dict(DesiredCapabilities.CHROME)
         driver_kwargs = {
             'executable_path': driver_executable_path,
             f'{driver_name}_options': driver_options,
